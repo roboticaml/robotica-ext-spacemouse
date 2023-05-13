@@ -132,5 +132,16 @@ To make the extension available to other users, use [Github Releases](https://do
 2. For each new release increment extension version (in `extension.toml`) and update the changelog (in `docs/CHANGELOG.md`). [Semantic versionning](https://semver.org/) must be used to express the severity of API changes.
   - See time index 4:17 in [this video from Mati](https://www.youtube.com/watch?v=lEQ2VmzXMgQ) for more information.
 
+# Known limitations
+1. Integration is achieved by simulating (injecting) keyboard and mouse events into the application.
+This is a significant limitation as it means that the usual use case of operating the spacemouse with
+the non-dominant hand and the regular mouse with the dominant hand, doesn't work - one can only use one
+input device at a time.  Hopefully in a future release a better API for injecting Spacemouse commands
+will become available.
+
+2. spacenavigator dependency is currently Windows-only. Therefore this extension only works on Windows currently.  There is a fork at https://github.com/JakubAndrysek/PySpaceMouse which we should investigate.
+To reduce dependency friction, we may wish to stick with spacenavigator for Windows and only use
+pyspacemouse on Linux and Mac OS X
+
 # Contributing
 The source code for this repository is provided as-is. We only accept outside contributions from individuals who have signed an Individual Contributor License Agreement.

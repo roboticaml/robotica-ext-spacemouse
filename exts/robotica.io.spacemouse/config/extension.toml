@@ -20,7 +20,8 @@ feature=true
 [python.pipapi]
 requirements = [
     "keyboard",
-    # "pywinusb",
+    "mouse",
+    # "pywinusb",       # Required by spacenavigator when on Windows. See extension.py.
     "spacenavigator"
 ]
 use_online_index = true
