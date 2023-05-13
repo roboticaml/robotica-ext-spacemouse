@@ -1,5 +1,12 @@
 import omni.ext
 import omni.ui as ui
+import keyboard
+import platform
+if platform.system() == 'Windows':
+    omni.kit.pipapi.install("pywinusb")
+import spacenavigator
+import time
+
 
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
@@ -38,6 +45,13 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
                 with ui.HStack():
                     ui.Button("Add", clicked_fn=on_click)
                     ui.Button("Reset", clicked_fn=on_reset)
+
+        success = spacenavigator.open()
+        if success:
+            while 1:
+                state = spacenavigator.read()
+                print(state.x, state.y, state.z)
+                time.sleep(0.5)
 
     def on_shutdown(self):
         print("[robotica.io.spacemouse] robotica io spacemouse shutdown")
