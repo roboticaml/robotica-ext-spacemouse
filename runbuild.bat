@@ -1,0 +1,1 @@
+app\omni.code.bat --ext-folder exts --enable robotica.io.spacemouse

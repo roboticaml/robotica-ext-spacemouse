@@ -1,0 +1,27 @@
+[package]
+version = "0.0.1"
+authors = ["Robotica"]
+title = "robotica io spacemouse"
+description="Integration of 3DConnexion's spacemouse with Omniverse."
+category = "other"
+keywords = ["kit", "io", "spacemouse", "3dconnexion", "spacenavigator"]
+readme  = "docs/README.md"
+repository = "https://github.com/roboticaml/robotica-ext-spacemouse.git"
+icon = "data/icon.png"
+preview_image = "data/preview.png"
+changelog="docs/CHANGELOG.md"
+feature=true
+
+# Use omni.ui to build simple UI
+[dependencies]
+"omni.kit.uiapp" = {}
+
+# Main python module this extension provides, it will be publicly available as "import robotica.io.spacemouse".
+[[python.module]]
+name = "robotica.io.spacemouse"
+
+[[test]]
+# Extra dependencies only to be used during test run
+dependencies = [
+    "omni.kit.ui_test" # UI testing extension
+]
