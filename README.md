@@ -7,7 +7,15 @@
 1. Install *Omniverse Launcher*: [download](https://www.nvidia.com/en-us/omniverse/download)
 2. Install and launch one of *Omniverse* apps in the Launcher. For instance: *Code*.
 
-## Add this extension to your *Omniverse App*
+## Option 1: Clone this repo and add this extension to your *Omniverse App*
+
+0. Clone the repo
+
+- `git https://github.com/roboticaml/robotica-ext-spacemouse.git`
+
+-- or -
+
+- `git clone git@github.com:roboticaml/robotica-ext-spacemouse.git`
 
 1. In the *Omniverse App* open extension manager: *Window* &rarr; *Extensions*.
 2. In the *Extension Manager Window* open a settings page, with a small gear button in the top left bar.
@@ -22,26 +30,46 @@
 * Now that `exts` folder was added to the search you can add new extensions to this folder and they will be automatically found by the *App*.
 * Look at the *Console* window for warnings and errors. It also has a small button to open the current log file.
 * All the same commands work on Linux. Replace `.bat` with `.sh` and `\` with `/`.
-* Extension name is a folder name in `exts` folder, in this example: `robotica.io.spacemouse`.
+* `Extension name` is a folder name in the `exts` folder, in this example: `robotica.io.spacemouse`.
 * The most important feature an extension has is a config file: `extension.toml`, take a peek.
 
-## Add this extension to your *Omniverse App* without cloning the github repo
+## Option 2: Add this extension to your *Omniverse App* without cloning the github repo
 
-Alternatively, a direct link to a git repository can be added to *Omniverse Kit* extension search paths.  Instead of the 'C:\' path above, use this path in the Extension manager:
+Alternatively, a direct link to a git repository can be added to *Omniverse Kit* extension search paths.  Instead of the 'C:\' path above, use this path in the Extension manager (```Extension Manager -> Gear Icon -> Extension Search Path```):
 
-`git://github.com/roboticaml//robotica-ext-spacemouse.git?branch=main&dir=exts`
+`git://github.com/roboticaml/robotica-ext-spacemouse.git?branch=main&dir=exts`
 
-Notice `exts` is repo subfolder with extensions. More information can be found in ["Git URL as Extension Search Paths"](https://docs.omniverse.nvidia.com/kit/docs/kit-manual/latest/guide/extensions_advanced.html#git-url-paths) section of the [Omniverse developers manual](https://docs.omniverse.nvidia.com/kit/docs/kit-manual/latest/index.html).
+Notice that `exts` is the repo subfolder containing the extension(s). More information can be found in ["Git URL as Extension Search Paths"](https://docs.omniverse.nvidia.com/kit/docs/kit-manual/latest/guide/extensions_advanced.html#git-url-paths) section of the [Omniverse developers manual](https://docs.omniverse.nvidia.com/kit/docs/kit-manual/latest/index.html).
 
 
 
-## Next Steps: An alternative way to add a new extension
+## Option 3: Linking with an *Omniverse* app
 
-To get a better understanding and learn a few other things, we recommend following next steps:
+For a better experience when developing this extension, it is recommended to create a folder link named `app` to the *Omniverse Kit* app installed from *Omniverse Launcher*. A convenience script to use is included.
 
 1. Remove the search path added in the previous section.
 2. Open this cloned repo using Visual Studio Code: `code C:\projects\robotica-ext-spacemouse`. It will suggest installing a few extensions to improve the Python experience.
-3. In the terminal (CTRL + \`) run `link_app.bat` (more in [Linking with an *Omniverse* app](#linking-with-an-omniverse-app) section).
+
+3. In the terminal (CTRL + \`), run:
+
+```bash
+> link_app.bat
+```
+
+If successful you should see the `app` folder link in the root of this repo.
+
+If multiple Omniverse apps are installed, the script will select the recommended one. Or you can explicitly pass an app:
+
+```bash
+> link_app.bat --app create
+```
+
+You can also just pass a path to use when creating the link:
+
+```bash
+> link_app.bat --path "C:/Users/bob/AppData/Local/ov/pkg/create-2021.3.4"
+```
+
 4. Run this app with `exts` folder added as an extensions search path and new extension enabled:
 
 ```bash
@@ -81,7 +109,7 @@ You should see a menu in the top left. From here you can enable more extensions 
 ### A few tips
 
 * In the *Extensions* window, press the *Burger* menu button near the search bar and select *Show Extension Graph*. It will show how the current *App* comes to be: all extensions and dependencies.
-* Extensions system documentation: http://omniverse-docs.s3-website-us-east-1.amazonaws.com/kit-sdk/104.0/docs/guide/extensions.html
+* Learn more: [Extensions system documentation](http://omniverse-docs.s3-website-us-east-1.amazonaws.com/kit-sdk/104.0/docs/guide/extensions.html)
 
 # Running Tests
 
@@ -96,44 +124,13 @@ That will run a test process with all tests and then exit. For development mode,
 For more information about testing refer to: [testing doc](http://omniverse-docs.s3-website-us-east-1.amazonaws.com/kit-sdk/104.0/docs/guide/ext_testing.html).
 
 
-# Linking with an *Omniverse* app
+# Sharing This Extension to Github
 
-For a better developer experience, it is recommended to create a folder link named `app` to the *Omniverse Kit* app installed from *Omniverse Launcher*. A convenience script to use is included.
+To make the extension available to other users, use [Github Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 
-Run:
-
-```bash
-> link_app.bat
-```
-
-If successful you should see the `app` folder link in the root of this repo.
-
-If multiple Omniverse apps are installed, the script will select the recommended one. Or you can explicitly pass an app:
-
-```bash
-> link_app.bat --app create
-```
-
-You can also just pass a path to use when creating the link:
-
-```bash
-> link_app.bat --path "C:/Users/bob/AppData/Local/ov/pkg/create-2021.3.4"
-```
-
-
-# Sharing This Extension
-
-This folder is ready to be pushed to any git repository. Once pushed direct link to a git repository can be added to *Omniverse Kit* extension search paths.
-
-Link might look like this: `git://github.com/[user]/[your_repo].git?branch=main&dir=exts`
-
-Notice `exts` is repo subfolder with extensions. More information can be found in "Git URL as Extension Search Paths" section of developers manual.
-
-To add a link to your *Omniverse Kit* based app go into: Extension Manager -> Gear Icon -> Extension Search Path
-
-# Sharing This Exensions to Github
-
-To allow the extension to be discoverable by the community, see time index 4:17 in [this video](https://www.youtube.com/watch?v=lEQ2VmzXMgQ).
+1. Make sure the repo has [omniverse-kit-extension](https://github.com/topics/omniverse-kit-extension) topic set for auto discovery.
+2. For each new release increment extension version (in `extension.toml`) and update the changelog (in `docs/CHANGELOG.md`). [Semantic versionning](https://semver.org/) must be used to express the severity of API changes.
+  - See time index 4:17 in [this video from Mati](https://www.youtube.com/watch?v=lEQ2VmzXMgQ) for more information.
 
 # Contributing
-Contributions are welcome.
+The source code for this repository is provided as-is. We only accept outside contributions from individuals who have signed an Individual Contributor License Agreement.
