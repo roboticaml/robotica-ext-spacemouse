@@ -1,3 +1,4 @@
+import carb
 import omni.ext
 import omni.ui as ui
 import keyboard
@@ -6,7 +7,6 @@ if platform.system() == 'Windows':
     omni.kit.pipapi.install("pywinusb")
 import spacenavigator
 import time
-
 
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
@@ -26,32 +26,23 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
 
         self._count = 0
 
-        self._window = ui.Window("My Window", width=300, height=300)
+        self._window = ui.Window("Spacemouse debug", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
-                label = ui.Label("")
-
-
-                def on_click():
-                    self._count += 1
-                    label.text = f"count: {self._count}"
-
-                def on_reset():
-                    self._count = 0
-                    label.text = "empty"
-
-                on_reset()
-
-                with ui.HStack():
-                    ui.Button("Add", clicked_fn=on_click)
-                    ui.Button("Reset", clicked_fn=on_reset)
+                self._label = ui.Label("")
 
         success = spacenavigator.open()
         if success:
             while 1:
                 state = spacenavigator.read()
-                print(state.x, state.y, state.z)
+                msg = f"{state.x}, {state.y}, {state.z}"
+                carb.log_warn(msg)
+                self._label.text = msg
                 time.sleep(0.5)
+        else:
+            msg = "No spacemouse detected"
+            carb.log_warn(msg)
+            self._label.text = msg
 
     def on_shutdown(self):
         print("[robotica.io.spacemouse] robotica io spacemouse shutdown")
