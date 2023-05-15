@@ -16,6 +16,8 @@ feature=true
 [dependencies]
 "omni.kit.uiapp" = {}
 "omni.kit.pipapi" = {}
+#"omni.kit.window.viewport" = {}
+"omni.kit.viewport.window" = {}
 
 [python.pipapi]
 requirements = [
