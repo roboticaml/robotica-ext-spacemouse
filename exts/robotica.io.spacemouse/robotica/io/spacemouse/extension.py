@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import math
 import platform
 
 import carb
@@ -61,7 +62,9 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
                 return
 
         self.previous_time = current_time
-        state: spacenavigator.SpaceNavigator = spacenavigator.SpaceNavigator(**{"t": 255.0, "x": 30.0, "y": 30.0, "z": 30.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "buttons": [0,0]})
+        state: spacenavigator.SpaceNavigator = spacenavigator.SpaceNavigator(
+            **{"t": 255.0, "x": 30.0, "y": 30.0, "z": 30.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "buttons": [0,0]}
+        )
         self.update_state(state)
 
     def on_spacemouse(self, state: spacenavigator.SpaceNavigator):
@@ -86,7 +89,7 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         self.previous_time = current_time
         self.update_state(state)
 
-    def get_projection_matrix(self, fov, aspect_ratio, z_near, z_far):
+    def get_projection_matrix(self, fov, aspect_ratio, z_near, z_far) -> omni.ui.scene.Matrix44:
         """
         Calculate the camera projection matrix.
 
@@ -97,15 +100,18 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
             z_far (float): distance to far clipping plane
 
         Returns:
-            (numpy.ndarray): View projection matrix with shape `(4, 4)`
+            (UsdGeom.Matrix4d): Flattened `(4, 4)` view projection matrix
         """
-        import math
-        import numpy as np
         a = -1.0 / math.tan(fov / 2)
         b = -a * aspect_ratio
         c = z_far / (z_far - z_near)
         d = z_near * z_far / (z_far - z_near)
-        return np.array([[a, 0.0, 0.0, 0.0], [0.0, b, 0.0, 0.0], [0.0, 0.0, c, 1.0], [0.0, 0.0, d, 0.0]])
+        return omni.ui.scene.Matrix44(
+            a, 0.0, 0.0, 0.0,
+            0.0, b, 0.0, 0.0,
+            0.0, 0.0, c, 1.0,
+            0.0, 0.0, d, 0.0
+        )
 
     def gfmatrix_to_matrix44(self, matrix: Gf.Matrix4d) -> omni.ui.scene.Matrix44:
         """
@@ -117,6 +123,9 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         Returns:
             UsdGeom.Matrix4d: Output matrix
         """
+        # convert the matrix by hand
+        # USING LIST COMPREHENSION IS VERY SLOW (e.g. return [item for sublist
+        # in matrix for item in sublist]), which takes around 10ms.
         matrix44 = omni.ui.scene.Matrix44(
             matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3],
             matrix[1][0], matrix[1][1], matrix[1][2], matrix[1][3],
@@ -135,6 +144,9 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         Returns:
             UsdGeom.Matrix4d: Output matrix
         """
+        # flatten the matrix by hand
+        # USING LIST COMPREHENSION IS VERY SLOW (e.g. return [item for sublist
+        # in matrix for item in sublist]), which takes around 10ms.
         return (
             matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3],
             matrix[1][0], matrix[1][1], matrix[1][2], matrix[1][3],
@@ -200,8 +212,6 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
 
             # Update the attribute - this next line hangs
             active_camera_prim.GetAttribute("xformOp:translate").Set(translate)
-
-            
 
 
     def on_shutdown(self):
