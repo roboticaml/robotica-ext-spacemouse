@@ -178,6 +178,8 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
             or state.y != 0
             or state.z != 0
         ):
+            # Based on code from
+            # https://github.com/mati-nvidia/developer-office-hours/blob/main/exts/maticodes.doh_2023_04_14/scripts/move_prim_forward.py
             local_transformation: Gf.Matrix4d = usd_camera.GetLocalTransformation()
             # Apply the local matrix to the start and end points of the camera's default forward vector (-Z)
             a: Gf.Vec4d = Gf.Vec4d(0,0,0,1) * local_transformation
