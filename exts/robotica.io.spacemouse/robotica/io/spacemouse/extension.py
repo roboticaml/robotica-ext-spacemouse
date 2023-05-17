@@ -1,34 +1,30 @@
-# import asyncio
-# import carb
 from datetime import datetime, timedelta
+import platform
+
+import carb
 import omni.ext
-import omni.ui.scene
-import omni.ui as ui
-import omni.usd
 import omni.kit.viewport.window
 import omni.kit.app
 import omni.kit.viewport
-import omni.kit.viewport.utility as vp_utility
-# from omni.kit.viewport.utility.legacy_viewport_api import LegacyViewportAPI
-# from omni.kit.viewport.utility.legacy_viewport_window import LegacyViewportWindow
-from omni.kit.manipulator.camera import ViewportCameraManipulator
-from omni.kit.manipulator.camera.model import CameraManipulatorModel
-# import omni.kit.property.camera
-from pxr import UsdGeom, Gf
-import platform
+import omni.ui.scene
+import omni.ui as ui
+import omni.usd
+from omni.kit.widget.viewport.api import ViewportAPI
+from omni.kit.viewport.window import ViewportWindow
+from pxr import Usd, UsdGeom, Gf
 if platform.system() == 'Windows':
     omni.kit.pipapi.install("pywinusb")
 # import pywinusb
 import spacenavigator
-import time
 
-UPDATE_TIME_MILLIS = 100
+UPDATE_TIME_MILLIS = 500
 
 
 class RoboticaIoSpacemouseExtension(omni.ext.IExt):
     def __init__(self):
         self._count = 0
         self.previous_time = None
+        self.previous_state = None
 
     def on_startup(self, ext_id):
         print("[robotica.io.spacemouse] robotica io spacemouse startup")
@@ -42,7 +38,7 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
                 self._label_connected = ui.Label("")
 
                 with ui.HStack():
-                    ui.Button("Move", clicked_fn=lambda: self.on_click)
+                    ui.Button("Move", clicked_fn=self.on_click)
 
         # Note1: It is possible to have multiple 3D mice connected.
         # See: https://github.com/johnhw/pyspacenavigator/blob/master/spacenavigator.py
@@ -58,10 +54,21 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         else:
             self._label_connected.text = "No spacemouse detected"
 
-    def on_click(self, _):
-        self.update_state({"t": 255.0, "x": 30.0, "y": 30.0, "z": 30.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "buttons": [0,0]})
+    def on_click(self):
+        current_time = datetime.now()
+        if self.previous_time:
+            if current_time - self.previous_time < timedelta(milliseconds=UPDATE_TIME_MILLIS):
+                return
+
+        self.previous_time = current_time
+        state: spacenavigator.SpaceNavigator = spacenavigator.SpaceNavigator(**{"t": 255.0, "x": 30.0, "y": 30.0, "z": 30.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "buttons": [0,0]})
+        self.update_state(state)
 
     def on_spacemouse(self, state: spacenavigator.SpaceNavigator):
+        if self.previous_state == state:
+            return
+        self.previous_state = state
+
         current_time = datetime.now()
         if self.previous_time:
             if current_time - self.previous_time < timedelta(milliseconds=UPDATE_TIME_MILLIS):
@@ -71,6 +78,12 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         self.update_state(state)
 
     def on_spacemouse_buttons(self, state: spacenavigator.SpaceNavigator, buttons: spacenavigator.ButtonState):
+        current_time = datetime.now()
+        if self.previous_time:
+            if current_time - self.previous_time < timedelta(milliseconds=UPDATE_TIME_MILLIS):
+                return
+            
+        self.previous_time = current_time
         self.update_state(state)
 
     def get_projection_matrix(self, fov, aspect_ratio, z_near, z_far):
@@ -141,79 +154,76 @@ class RoboticaIoSpacemouseExtension(omni.ext.IExt):
         self._label_connected.text = f"{state.t}"
 
         ctx = omni.usd.get_context()
-        stage = ctx.get_stage()
-        root_layer = stage.GetRootLayer()
-        scene_root_prim = stage.GetPrimAtPath(root_layer.defaultPrim)
-        scene = UsdGeom.Xform(scene_root_prim)
+        stage: Usd.Stage = ctx.get_stage()
 
-        vp_window = omni.kit.viewport.window.ViewportWindow.active_window
-        viewport_api = vp_window.viewport_api
+        active_viewport_window: ViewportWindow = ViewportWindow.active_window
+        active_viewport_api: ViewportAPI = active_viewport_window.viewport_api
 
         # active_camera_path = viewport_api.get_active_camera()
-        active_viewport = vp_utility.get_active_viewport()
-        if active_viewport:
-            time = active_viewport.time
-            active_camera_path = active_viewport.camera_path
+        if active_viewport_window:
+            viewport_time = active_viewport_api.time
+            active_camera_path = active_viewport_api.camera_path
 
-        active_camera: UsdGeom.Camera = stage.GetPrimAtPath(active_camera_path)
-        active_camera_xform = UsdGeom.Xformable(active_camera)
+        active_camera_prim: Usd.Prim = stage.GetPrimAtPath(active_camera_path)
 
-        model = CameraManipulatorModel()
+        # usd_camera = UsdGeom.Camera(active_camera_prim)
+        # self._gf_camera: Gf.Camera = usd_camera.GetCamera()
+        
+        usd_camera = UsdGeom.Xformable(active_camera_prim)
 
-        projection = self.gfmatrix_to_array(active_camera_xform.GetLocalTransformation())
+        projection = self.gfmatrix_to_array(usd_camera.GetLocalTransformation())
 
-        model.set_floats('projection', values=projection)
+        if (
+            state.x != 0
+            or state.y != 0
+            or state.z != 0
+        ):
+            local_transformation: Gf.Matrix4d = usd_camera.GetLocalTransformation()
+            # Apply the local matrix to the start and end points of the camera's default forward vector (-Z)
+            a: Gf.Vec4d = Gf.Vec4d(0,0,0,1) * local_transformation
+            b: Gf.Vec4d = Gf.Vec4d(0,0,-10,1) * local_transformation
+            # Get the vector between those two points to get the camera's current forward vector
+            cam_fwd_vec = b-a
+            # Convert to Vec3 and then normalize to get unit vector
+            cam_fwd_unit_vec = Gf.Vec3d(cam_fwd_vec[:3]).GetNormalized()
+            # Multiply the forward direction vector with how far forward you want to move
+            forward_step = cam_fwd_unit_vec * 100
+            # Create a new matrix with the translation that you want to perform
+            offset_mat = Gf.Matrix4d()
+            offset_mat.SetTranslate(forward_step)
+            # Apply the translation to the current local transform
+            new_transform: Gf.Matrix4d = local_transformation * offset_mat
+            # Extract the new translation
+            translate: Gf.Vec3d = new_transform.ExtractTranslation()
 
-        sceneview = omni.ui.scene.SceneView(model=model, projection=projection)
-        model.set_floats('projection', values=projection)
+            # Update the attribute - this next line hangs
+            active_camera_prim.GetAttribute("xformOp:translate").Set(translate)
 
-        with sceneview.scene:
-            camera_manip = ViewportCameraManipulator(viewport_api)
-            camera_manip.model.set_floats('projection', values=projection)
-
-            sceneview.model = camera_manip.model
-
-
-            if (
-                state.x != 0
-                or state.y != 0
-                or state.z != 0
-            ):
-
-                sceneview.model.set_ints('disable_pan', [0])
-                sceneview.model.set_ints('disable_fly', [0])
-
-                pan_speed_x = 0.5
-                pan_speed_y = 0.5
-                zoom_speed_z = 0.5
-                sceneview.model.set_floats('world_speed', [pan_speed_x, pan_speed_y, zoom_speed_z])
-
-                fly_speed = 1.0
-                sceneview.model.set_floats('fly_speed', [fly_speed])
-
-                sceneview.model.set_floats('move', [30.0, 0.0, 0.0])
-                sceneview.model.set_floats('fly', [1000.0, 0.0, 0.0])
             
 
 
     def on_shutdown(self):
-        if self._nav1:
+        if self._nav1 is not None:
             self._nav1.close()
             self._nav1.callback = None
             self._nav1.button_callback = None
-        if self._nav2:
+        if self._nav2 is not None:
             self._nav2.close()
             self._nav2.callback = None
             self._nav2.button_callback = None
         self._nav1 = None
         self._nav2 = None
         self.previous_time = None
-        if self._label_msg:
+        if self._label_msg is not None:
             self._label_msg.text = ""
-        if self._label_msg2:
+        if self._label_msg2 is not None:
             self._label_msg2.text = ""
-        if self._label_buttons:
+        if self._label_buttons is not None:
             self._label_buttons.text = ""
-        if self._label_connected:
+        if self._label_connected is not None:
             self._label_connected.text = "Not connected"
+        self._window = None
+
+        self._active_viewport_window = None
+        self._ext_id = None
         print("[robotica.io.spacemouse] robotica io spacemouse shutdown")
