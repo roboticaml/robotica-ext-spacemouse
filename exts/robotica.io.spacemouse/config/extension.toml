@@ -21,9 +21,12 @@ feature=true
 
 [python.pipapi]
 requirements = [
-    "keyboard",
-    "mouse",
     # "pywinusb",       # Required by spacenavigator when on Windows. See extension.py.
+
+    # The next line is equivilent to .\app\kit\python\python.exe -m pip install "spacenavigator@git+https://github.com/md84419/pyspacenavigator#egg=spacenavigator.py-0.2.3"
+    "spacenavigator@git+https://github.com/md84419/pyspacenavigator#egg=spacenavigator.py-0.2.3==0.2.3"
+]
+modules = [
     "spacenavigator"
 ]
 use_online_index = true
